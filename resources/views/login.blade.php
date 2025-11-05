@@ -104,20 +104,12 @@
         }
     </style>
 </head>
-<<<<<<< HEAD
-=======
-<body class=" flex items-center justify-center h-screen">
-    <form method="POST" action="{{ route('login') }}" class="w-[450px]">
-
-        <input type="hidden" name="redirect" value="{{ $redirect }}">
->>>>>>> 8dad89438ae279f6eefdcd05390c7e5022befee6
 
 <body class="transition-all duration-700">
 
-<<<<<<< HEAD
     <!-- ========== Default Login Layout ========== -->
     <div id="defaultLayout" class="hidden flex items-center justify-center h-screen">
-        <form method="POST" action="{{ url('/api/login') }}" class="w-[450px]">
+        <form method="POST" action="{{ route('login') }}" class="w-[450px]">
             <input type="hidden" name="redirect" value="{{ $redirect }}">
 
             <p class="text-[70pt] font-bold mb-0 text-center"><span class="text-blue-600">auth</span>ify</p>
@@ -157,7 +149,7 @@
                 <p class="text-white/80 text-sm mt-2">Secure Single Sign-On with holiday cheer</p>
             </div>
 
-            <form method="POST" action="{{ url('/api/login') }}" class="space-y-5 relative z-10">
+            <form method="POST" action="{{ route('login') }}" class="space-y-5 relative z-10">
                 <input type="hidden" name="redirect" value="{{ $redirect }}">
 
                 <div class="relative">
@@ -183,17 +175,6 @@
                     <i class="fas fa-snowflake animate-bounce text-green-300"></i> Login
                 </button>
             </form>
-=======
-        @if (request('status'))
-        <div class="text-center mb-4 p-2 bg-red-600 text-white rounded">
-           {{ base64_decode(request('status')) }}
-        </div>
-        @endif
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="employeeID">Employee ID</label>
-            <input type="text" name="employeeID" id="employeeID" class="w-full px-4 py-2 border rounded" value="{{ old('employeeID') }}" required>
->>>>>>> 8dad89438ae279f6eefdcd05390c7e5022befee6
         </div>
 
         <!-- Music -->

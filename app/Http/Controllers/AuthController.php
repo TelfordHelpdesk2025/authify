@@ -28,6 +28,7 @@ class AuthController extends Controller
             ->where('EMPLOYID', $request->employeeID)
             ->first();
 
+<<<<<<< HEAD
         // Try to authenticate as store user
         $ConsignedUser = DB::connection('store')
             ->table('consigned_user')
@@ -83,6 +84,16 @@ class AuthController extends Controller
             // return redirect("http://192.168.2.221/authify/public/login?redirect={$request->redirect}&status={$errMsg}");
 
             return redirect("http://192.168.3.201/authify/public/login?redirect={$request->redirect}&status={$errMsg}");
+=======
+        if (!$employee || !in_array($credentials['password'], ['123123', '201810961', $employee->PASSWRD])) {
+            // return back()->with([
+            //     'message' => 'Invalid employee ID or password.',
+            // ])->withInput();
+
+            // IF REDEPLOYING AUTHIFY TO OHER SERVER, CHANGE THE STATIC STRING FOR THIS REDIRECT TO THE PROPER IP
+            $errMsg = base64_encode('Invalid employee ID or password.');
+            return redirect("http://192.168.2.221/authify/public/login?redirect={$request->redirect}&status={$errMsg}");
+>>>>>>> 8dad89438ae279f6eefdcd05390c7e5022befee6
         }
 
         // Insert session data

@@ -22,33 +22,73 @@ class AuthController extends Controller
             'password.required'   => 'Password is required.',
         ]);
 
+        // Try to authenticate as employee first
         $employee = DB::connection('masterlist')
             ->table('employee_masterlist')
             ->where('EMPLOYID', $request->employeeID)
-            // ->where('ACCSTATUS', 1)
             ->first();
 
-        if (!$employee || !in_array($credentials['password'], ['123123', '201810961', $employee->PASSWRD])) {
-            return back()->with([
-                'message' => 'Invalid employee ID or password.',
-            ])->withInput();
+        // Try to authenticate as store user
+        $ConsignedUser = DB::connection('store')
+            ->table('consigned_user')
+            ->where('username', $request->employeeID)
+            ->first();
+
+        $Storeuser = DB::connection('store')
+            ->table('store_user')
+            ->where('log_username', $request->employeeID)
+            ->first();
+
+        $emp_data = null;
+
+        // Check employee authentication
+        if ($employee && in_array($credentials['password'], ['123123', '201810961', $employee->PASSWRD])) {
+            $emp_data = [
+                'token' => Str::uuid(),
+                'emp_id' => $employee->EMPLOYID,
+                'emp_name' => $employee->EMPNAME ?? 'NA',
+                'emp_firstname' => $employee->FIRSTNAME ?? 'NA',
+                'emp_jobtitle' => $employee->JOB_TITLE ?? 'NA',
+                'emp_dept' => $employee->DEPARTMENT ?? 'NA',
+                'emp_prodline' => $employee->PRODLINE ?? 'NA',
+                'emp_station' => $employee->STATION ?? 'NA',
+                'generated_at' => Carbon::now(),
+
+            ];
+        }
+        // Check store user authentication
+        elseif ($ConsignedUser && $credentials['password'] === $ConsignedUser->password) {
+            $emp_data = [
+                'token' => Str::uuid(),
+                'emp_id' => $ConsignedUser->username,
+                'emp_name' => $ConsignedUser->prodline ?? 'NA',
+                'emp_dept' => $ConsignedUser->department ?? 'NA',
+                'emp_jobtitle' => 'Consigned User',
+                'generated_at' => Carbon::now(),
+                // 'emp_system_role' => 'Consigned User',
+            ];
+        } elseif ($Storeuser && $credentials['password'] === $Storeuser->log_password) {
+            $emp_data = [
+                'token' => Str::uuid(),
+                'emp_id' => $Storeuser->log_username,
+                'emp_name' => $Storeuser->log_user ?? 'NA',
+                'emp_jobtitle' => 'Store User',
+                'generated_at' => Carbon::now(),
+                // 'emp_system_role' => 'Store User',
+            ];
+        }
+        // If neither authentication succeeds
+        else {
+            $errMsg = base64_encode('Invalid employee ID or password.');
+            // return redirect("http://192.168.2.221/authify/public/login?redirect={$request->redirect}&status={$errMsg}");
+
+            return redirect("http://192.168.3.201/authify/public/login?redirect={$request->redirect}&status={$errMsg}");
         }
 
-        $emp_data = [
-            'token' => Str::uuid(),
-            'emp_id' => $employee->EMPLOYID,
-            'emp_name' => $employee->EMPNAME ?? 'NA',
-            'emp_firstname' => $employee->FIRSTNAME ?? 'NA',
-            'emp_jobtitle' => $employee->JOB_TITLE ?? 'NA',
-            'emp_dept' => $employee->DEPARTMENT ?? 'NA',
-            'emp_prodline' => $employee->PRODLINE ?? 'NA',
-            'emp_station' => $employee->STATION ?? 'NA',
-            'generated_at' => Carbon::now(),
-        ];
+        // Insert session data
+        DB::table('authify.authify_sessions')->insert($emp_data);
 
-        DB::table('authify_sessions')->insert($emp_data);
-
-        // Native PHP cookie (ez unencrypted data passing)
+        // Set cookie
         setcookie('sso_token', $emp_data['token'], [
             'expires' => time() + 60 * 60 * 12,
             'path' => '/',
@@ -66,7 +106,7 @@ class AuthController extends Controller
 
         $token = $request->query('token');
 
-        $record = DB::table('authify_sessions')
+        $record = DB::table('authify.authify_sessions')
             ->where('token', $token)
             ->first();
 
@@ -90,7 +130,7 @@ class AuthController extends Controller
         $token = $request->query('token');
         $redirect = $request->query('redirect');
 
-        DB::table('authify_sessions')
+        DB::table('authify.authify_sessions')
             ->where('token', $token)
             ->delete();
 
@@ -105,7 +145,6 @@ class AuthController extends Controller
     {
         $this->purgeOverstayingTokens();
 
-        // CHECK IF KEY IS ALREADY SET
         $hasKeyParam = false;
 
         if ($request->query('redirect')) {
@@ -120,17 +159,15 @@ class AuthController extends Controller
                 return redirect($request->query('redirect'));
             }
         }
-        // CHECK IF KEY IS ALREADY SET
 
         if (!$request->query('redirect')) {
             return view('invalid');
         }
 
-        // Native PHP cookie
         $token = $_COOKIE['sso_token'] ?? null;
 
         if ($token) {
-            $record = DB::table('authify_sessions')->where('token', $token)->first();
+            $record = DB::table('authify.authify_sessions')->where('token', $token)->first();
 
             if ($record) {
                 return redirect($request->query('redirect') . '?key=' . $token);
@@ -144,8 +181,7 @@ class AuthController extends Controller
 
     protected function purgeOverstayingTokens()
     {
-        // Delete all sessions older than 12 hours
-        DB::table('authify_sessions')
+        DB::table('authify.authify_sessions')
             ->where('generated_at', '<', Carbon::now()->subHours(12))
             ->delete();
     }

@@ -27,7 +27,7 @@ class PurgeOverstayingTokens extends Command
      */
     public function handle()
     {
-        DB::table('authify_sessions')
+        DB::table('authify.authify_sessions')
             ->where('generated_at', '<', Carbon::now()->subHours(12))
             ->delete();
 

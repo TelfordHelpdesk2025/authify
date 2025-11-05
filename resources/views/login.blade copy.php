@@ -16,7 +16,7 @@
 </head>
 
 <body class=" flex items-center justify-center h-screen">
-    <form method="POST" action="{{ url('/api/login') }}" class="w-[450px]">
+    <form method="POST" action="{{ route('login') }}" class="w-[450px]">
 
         <input type="hidden" name="redirect" value="{{ $redirect }}">
 
